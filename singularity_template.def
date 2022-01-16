@@ -5,25 +5,44 @@ From: fedora:35
 
 %post
     dnf install -y wget openssh-clients git
+    
+    ## We'll install in /opt
     cd /opt
+    
+    ## Get your packages cloned (with a git repo, not zip)
     git clone https://github.com/<YOU>/MyPackage.jl
+    
+    ## Get latest Julia
     wget https://julialang-s3.julialang.org/bin/linux/x64/1.7/julia-1.7.1-linux-x86_64.tar.gz
     mkdir -p /opt/julia
     mv julia-1.7.1-linux-x86_64.tar.gz /opt/julia
     cd /opt/julia
     tar -xf julia-1.7.1-linux-x86_64.tar.gz
+    
+    ## Make sure PATH is set correctly 
     export PATH=/opt/julia/julia-1.7.1/bin:$PATH
+    
+    ## Isolate Julia to use within container directories, do not leak to ~/.julia if we can avoid it
     mkdir -p /opt/juliadepot
     export JULIA_DEPOT_PATH=/opt/juliadepot
+    
+    ## Configure our own package
     cd /opt/MyPackage.jl
+    
+    # Install (note that --project=X is the same as Pkg.activate(X))
     julia --project=/opt/MyPackage.jl -e 'using Pkg; Pkg.update(); Pkg.instantiate()'
+    # Force precompile
     julia --project=/opt/MyPackage.jl -e 'using MyPackage'
+    # Not needed
     julia --project=/opt/MyPackage.jl -e 'using Pkg; Pkg.build("MyPackage")'
+    # Make sure what we build still works, if the tests fail, the build will fail.
     julia --project=/opt/MyPackage.jl -e 'using Pkg; Pkg.test("MyPackage")'
+    
     ## Interactive Julia will write to logs, but we don't want
     ## the container to be writable, so link it to tmpfs on host.
     rm -rf /opt/juliadepot/logs
     ln -s /dev/shm/ /opt/juliadepot/logs
+    
     # Get rid of the packages not needed for runtime
     dnf remove -y wget openssh-clients git
 
