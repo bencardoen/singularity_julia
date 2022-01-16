@@ -1,6 +1,7 @@
 BootStrap: docker
 From: fedora:35
 
+### Change <YOU>/MyPackage.jl to the appropriate settings for you BEFORE you run this.
 
 %post
     dnf install -y wget openssh-clients git
@@ -42,4 +43,4 @@ From: fedora:35
     Version v0.4.2
 
 %help
-    singularity exec image.sif julia --project=/opt/MyCode.jl
+    singularity exec image.sif julia --project=/opt/MyPackage.jl
